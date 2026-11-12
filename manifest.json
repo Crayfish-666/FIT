@@ -1,0 +1,10 @@
+{
+  "name": "FIT 刷题",
+  "short_name": "FIT 刷题",
+  "description": "信息技术基础章节分节刷题与错题本",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F7F7F5",
+  "theme_color": "#F7F7F5",
+  "orientation": "portrait"
+}

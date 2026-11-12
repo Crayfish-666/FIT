@@ -1,0 +1,18 @@
+{
+  "name": "fit-exam-android",
+  "version": "1.0.0",
+  "description": "信息技术基础刷题软件",
+  "scripts": {
+    "prepare-www": "rm -rf www && mkdir -p www && cp -r index.html manifest.json sw.js css js data lib assets www/",
+    "cap:init": "npx cap add android",
+    "cap:sync": "npm run prepare-www && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^6.0.0"
+  }
+}

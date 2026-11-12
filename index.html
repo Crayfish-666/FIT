@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="theme-color" content="#F7F7F5">
+  <title>FIT 刷题</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app" v-cloak>
+    <div class="app-shell">
+
+      <!-- Toast Feedback -->
+      <div v-if="toastMessage" class="toast-pill mono">{{ toastMessage }}</div>
+
+      <!-- Top Bar (Main Views) -->
+      <header v-if="currentTab !== 'quiz'" class="top-bar">
+        <div class="top-bar-inner">
+          <div class="brand-title">
+            <span class="swiss-square"></span>
+            <span class="brand-code">FIT</span>
+            <span class="brand-name">{{ navTitle }}</span>
+          </div>
+          <button type="button" class="theme-toggle-btn" @click="toggleDarkMode">
+            <span>{{ settings.darkMode ? 'LIGHT' : 'DARK' }}</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Top Bar (Quiz View) -->
+      <header v-if="currentTab === 'quiz'" class="top-bar">
+        <div class="top-bar-inner">
+          <button type="button" class="quiz-top-btn" @click="exitQuiz">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+              <path d="M19 12H5"></path>
+              <path d="M12 19l-7-7 7-7"></path>
+            </svg>
+            <span>返回</span>
+          </button>
+
+          <div class="segmented">
+            <button
+              type="button"
+              class="seg-btn"
+              :class="{ active: quiz.mode === 'practice' }"
+              @click="quiz.mode = 'practice'"
+            >答题</button>
+            <button
+              type="button"
+              class="seg-btn"
+              :class="{ active: quiz.mode === 'memorize' }"
+              @click="quiz.mode = 'memorize'"
+            >背题</button>
+          </div>
+
+          <div class="quiz-top-right">
+            <button
+              type="button"
+              class="icon-btn"
+              :class="{ favorited: isFavorited(currentQuestion ? currentQuestion.id : '') }"
+              aria-label="收藏题目"
+              @click="toggleFavorite(currentQuestion ? currentQuestion.id : '')"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" :fill="isFavorited(currentQuestion ? currentQuestion.id : '') ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="icon-btn"
+              aria-label="打开答题卡"
+              @click="quiz.showSheet = true"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="quiz-progress-strip">
+          <div class="quiz-progress-fill" :style="{ width: quizProgressPercent + '%' }"></div>
+        </div>
+      </header>
+
+      <!-- TAB 1: HOME / DIRECTORY -->
+      <main v-if="currentTab === 'home'" class="page-body">
+        <div class="kpi-grid">
+          <div class="kpi-cell">
+            <div class="kpi-val">{{ stats.answeredCount }}<small>/{{ stats.totalCount }}</small></div>
+            <div class="kpi-label">已做题数</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-val">{{ stats.accuracy }}%</div>
+            <div class="kpi-label">正确率</div>
+          </div>
+          <div class="kpi-cell clickable" @click="currentTab = 'mistakes'">
+            <div class="kpi-val accent">{{ mistakes.length }}</div>
+            <div class="kpi-label">错题本</div>
+          </div>
+          <div class="kpi-cell clickable" @click="openFavoritesTab">
+            <div class="kpi-val">{{ favorites.length }}</div>
+            <div class="kpi-label">已收藏</div>
+          </div>
+        </div>
+
+        <div v-if="lastSession" class="resume-bar" @click="resumeLastSession">
+          <div class="resume-info">
+            <div class="resume-tag">RESUME · 第 {{ (lastSession.index || 0) + 1 }} 题</div>
+            <div class="resume-title">{{ lastSession.title }}</div>
+          </div>
+          <span class="resume-action">继续 →</span>
+        </div>
+
+        <div class="grid-section-head">
+          <h2>章节目录 · INDEX</h2>
+          <span>{{ bank.chapters.length }} CHAPTERS / {{ stats.totalCount }} ITEMS</span>
+        </div>
+
+        <div v-for="(ch, chIdx) in bank.chapters" :key="ch.id" class="chapter-group">
+          <button
+            type="button"
+            class="chapter-row"
+            :class="{ expanded: activeChapters.includes(ch.id) }"
+            @click="toggleChapter(ch.id)"
+          >
+            <div class="chapter-left">
+              <span class="chapter-num">{{ String(chIdx + 1).padStart(2, '0') }}</span>
+              <span class="chapter-title">{{ ch.number }} · {{ ch.title }}</span>
+            </div>
+            <div class="chapter-right">
+              <span class="chapter-ratio">{{ getChapterDoneCount(ch.id) }}/{{ getChapterTotalCount(ch.id) }}</span>
+              <span class="plus-minus">{{ activeChapters.includes(ch.id) ? '−' : '+' }}</span>
+            </div>
+          </button>
+
+          <div v-if="activeChapters.includes(ch.id)" class="section-list">
+            <div
+              v-for="(sec, secIdx) in ch.sections"
+              :key="sec.id"
+              class="section-row"
+              :class="{ empty: sec.questions.length === 0 }"
+              @click="openSectionSheet(ch, sec)"
+            >
+              <div class="section-row-top">
+                <div class="section-title-wrap">
+                  <span class="section-code">{{ String(chIdx + 1).padStart(2, '0') }}.{{ String(secIdx + 1).padStart(2, '0') }}</span>
+                  <span class="section-title">{{ sec.number }}　{{ sec.title }}</span>
+                </div>
+                <div class="section-status">
+                  <span v-if="sec.questions.length === 0" class="swiss-tag muted">待录入</span>
+                  <template v-else>
+                    <span>{{ getSectionDoneCount(sec.id) }}/{{ sec.questions.length }}</span>
+                    <span>›</span>
+                  </template>
+                </div>
+              </div>
+              <template v-if="sec.questions.length > 0">
+                <div class="hairline-track">
+                  <div
+                    class="hairline-fill"
+                    :class="{ red: getSectionProgress(sec.id) === 100 }"
+                    :style="{ width: getSectionProgress(sec.id) + '%' }"
+                  ></div>
+                </div>
+                <div class="section-submeta mono">
+                  <span>进度 {{ getSectionProgress(sec.id) }}%</span>
+                  <span>正确率 {{ getSectionAccuracy(sec.id) }}%</span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- TAB 2: MISTAKE BOOK -->
+      <main v-if="currentTab === 'mistakes'" class="page-body">
+        <div class="filter-bar">
+          <div class="filter-cell">
+            <select
+              v-model="mistakeFilter.chapterId"
+              class="swiss-select"
+              @change="mistakeFilter.sectionId = 'all'"
+            >
+              <option v-for="opt in mistakeChapterOptions" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
+            </select>
+            <span class="filter-caret">▾</span>
+          </div>
+          <div class="filter-cell">
+            <select v-model="mistakeFilter.sectionId" class="swiss-select">
+              <option v-for="opt in mistakeSectionOptions" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
+            </select>
+            <span class="filter-caret">▾</span>
+          </div>
+          <div class="filter-cell">
+            <select v-model="mistakeFilter.type" class="swiss-select">
+              <option v-for="opt in mistakeTypeOptions" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
+            </select>
+            <span class="filter-caret">▾</span>
+          </div>
+        </div>
+
+        <div v-if="mistakeSectionSummary.length > 0" class="summary-table">
+          <div class="summary-table-head">
+            <span class="summary-table-title">各章节小节分布</span>
+            <button type="button" class="btn btn-red btn-sm" @click="startFilteredMistakesQuiz">
+              重刷当前筛选 ({{ filteredMistakes.length }})
+            </button>
+          </div>
+          <div
+            v-for="item in mistakeSectionSummary"
+            :key="item.sectionId"
+            class="summary-table-row"
+          >
+            <span>{{ item.chapterNumber }} · {{ item.sectionNumber }} {{ item.sectionTitle }}</span>
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+              <span class="swiss-tag red">{{ item.count }} 题</span>
+              <button type="button" class="btn btn-sm" @click="startMistakesBySection(item.sectionId)">专练</button>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="filteredMistakes.length === 0" class="empty-block">
+          <div class="empty-code">00</div>
+          <div class="empty-text">暂无错题记录，在练习中答错的题目会自动收录至此</div>
+        </div>
+
+        <div v-if="filteredMistakes.length > 0">
+          <div
+            v-for="(q, idx) in filteredMistakes"
+            :key="q.id"
+            class="question-list-row"
+            @click="openMistakeQuestion(idx)"
+          >
+            <div class="ql-top">
+              <div class="ql-meta">
+                <span class="swiss-tag">{{ q.typeLabel }}</span>
+                <span class="ql-path">{{ q.chapterNumber }} / {{ q.sectionNumber }} {{ q.sectionTitle }}</span>
+              </div>
+              <button
+                type="button"
+                class="icon-btn"
+                aria-label="移出错题本"
+                @click.stop="removeMistake(q.id)"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <div class="ql-stem"><span class="mono">{{ q.seq }}.</span> {{ q.stem }}</div>
+            <div class="ql-foot">
+              <span>我的作答：<strong style="color: var(--red);">{{ formatAnswer(records[q.id] ? records[q.id].userAnswer : '') || '未记录' }}</strong></span>
+              <span>正确答案：<strong style="color: var(--green);">{{ formatAnswer(q.answer) }}</strong></span>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- TAB 3: SEARCH & FAVORITES -->
+      <main v-if="currentTab === 'search'" class="page-body">
+        <div class="search-header">
+          <div class="search-input-wrap">
+            <input
+              v-model="search.keyword"
+              type="text"
+              placeholder="输入题干、选项或解析关键词检索..."
+            >
+            <button
+              v-if="search.keyword"
+              type="button"
+              class="search-clear-btn"
+              aria-label="清空"
+              @click="search.keyword = ''"
+            >×</button>
+          </div>
+          <div class="search-scope-bar">
+            <div class="search-scope-tabs">
+              <button
+                type="button"
+                class="btn btn-sm"
+                :class="{ 'btn-primary': search.scope === 'all' }"
+                @click="search.scope = 'all'"
+              >全部题库 ({{ allQuestions.length }})</button>
+              <button
+                type="button"
+                class="btn btn-sm"
+                :class="{ 'btn-primary': search.scope === 'fav' }"
+                @click="search.scope = 'fav'"
+              >我的收藏 ({{ favorites.length }})</button>
+            </div>
+            <button
+              v-if="searchedQuestions.length > 0"
+              type="button"
+              class="btn btn-sm"
+              @click="startQuiz({ title: search.scope === 'fav' ? '收藏练习' : '检索练习', questions: searchedQuestions, startIndex: 0 })"
+            >练习 ({{ searchedQuestions.length }})</button>
+          </div>
+        </div>
+
+        <div v-if="searchedQuestions.length === 0" class="empty-block">
+          <div class="empty-code">00</div>
+          <div class="empty-text">未找到符合条件的题目</div>
+        </div>
+
+        <div v-if="searchedQuestions.length > 0">
+          <div
+            v-for="(q, idx) in searchedQuestions"
+            :key="q.id"
+            class="question-list-row"
+            @click="startQuiz({ title: '题目查阅', questions: searchedQuestions, startIndex: idx })"
+          >
+            <div class="ql-top">
+              <div class="ql-meta">
+                <span class="swiss-tag">{{ q.typeLabel }}</span>
+                <span class="ql-path">{{ q.chapterNumber }} / {{ q.sectionNumber }} {{ q.sectionTitle }}</span>
+              </div>
+              <button
+                type="button"
+                class="icon-btn"
+                :class="{ favorited: isFavorited(q.id) }"
+                aria-label="收藏切换"
+                @click.stop="toggleFavorite(q.id)"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" :fill="isFavorited(q.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.8" stroke-linecap="square">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+              </button>
+            </div>
+            <div class="ql-stem"><span class="mono">{{ q.seq }}.</span> {{ q.stem }}</div>
+            <div class="ql-foot">
+              <span>答案：<strong>{{ formatAnswer(q.answer) }}</strong></span>
+              <span v-if="records[q.id]" :style="{ color: records[q.id].isCorrect ? 'var(--green)' : 'var(--red)' }">
+                {{ records[q.id].isCorrect ? '已答对' : '曾答错' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- TAB 4: STATS, SETTINGS & BACKUP -->
+      <main v-if="currentTab === 'stats'" class="page-body">
+        <div class="grid-section-head">
+          <h2>题型统计 · ANALYTICS</h2>
+          <span>ACCURACY</span>
+        </div>
+
+        <div v-for="item in typeStats" :key="item.type" class="stat-row">
+          <div class="stat-row-top">
+            <span class="stat-label">{{ item.label }}</span>
+            <span class="stat-nums">已做 {{ item.done }} / {{ item.total }} · 正确率 {{ item.accuracy }}%</span>
+          </div>
+          <div class="hairline-track">
+            <div
+              class="hairline-fill"
+              :style="{ width: (item.total > 0 ? Math.round((item.done / item.total) * 100) : 0) + '%' }"
+            ></div>
+          </div>
+        </div>
+
+        <div class="grid-section-head">
+          <h2>刷题偏好 · PREFERENCES</h2>
+          <span>LOCAL</span>
+        </div>
+
+        <div class="setting-row clickable" @click="toggleSetting('autoNextOnCorrect')">
+          <div>
+            <div class="setting-title">答对自动下一题</div>
+            <div class="setting-desc">作答正确后自动跳转至下一题</div>
+          </div>
+          <button type="button" class="swiss-switch" :class="{ on: settings.autoNextOnCorrect }" aria-label="答对自动下一题">
+            <span class="swiss-switch-thumb"></span>
+          </button>
+        </div>
+
+        <div class="setting-row clickable" @click="toggleSetting('autoRemoveMistake')">
+          <div>
+            <div class="setting-title">错题答对自动移出</div>
+            <div class="setting-desc">在练习中答对已收录错题时自动移出错题本</div>
+          </div>
+          <button type="button" class="swiss-switch" :class="{ on: settings.autoRemoveMistake }" aria-label="错题答对自动移出">
+            <span class="swiss-switch-thumb"></span>
+          </button>
+        </div>
+
+        <div class="setting-row clickable" @click="toggleDarkMode">
+          <div>
+            <div class="setting-title">深色模式</div>
+            <div class="setting-desc">切换高对比暗黑工作室配色</div>
+          </div>
+          <button type="button" class="swiss-switch" :class="{ on: settings.darkMode }" aria-label="深色模式">
+            <span class="swiss-switch-thumb"></span>
+          </button>
+        </div>
+
+        <div class="grid-section-head">
+          <h2>进度备份与迁移 · BACKUP</h2>
+          <span>JSON</span>
+        </div>
+
+        <div class="setting-row clickable" @click="exportBackupFile">
+          <div>
+            <div class="setting-title">导出备份文件 (.json)</div>
+            <div class="setting-desc">下载包含答题记录、错题本、收藏与设置的完整档案</div>
+          </div>
+          <span class="mono" style="font-size: 13px;">↓</span>
+        </div>
+
+        <div class="setting-row clickable" @click="openBackupTextModal('export')">
+          <div>
+            <div class="setting-title">复制备份文本 / 粘贴恢复</div>
+            <div class="setting-desc">安卓端推荐：通过剪贴板导出或粘贴恢复全部学习记录</div>
+          </div>
+          <span class="mono" style="font-size: 13px;">→</span>
+        </div>
+
+        <div class="setting-row clickable" @click="triggerFileImport">
+          <div>
+            <div class="setting-title">从本地文件导入恢复 (.json)</div>
+            <div class="setting-desc">选择此前导出的备份 JSON 文件覆盖或合并记录</div>
+          </div>
+          <span class="mono" style="font-size: 13px;">↑</span>
+        </div>
+        <input
+          ref="backupFileInput"
+          type="file"
+          accept=".json,application/json"
+          style="display: none;"
+          @change="onImportBackupFile"
+        >
+
+        <div class="grid-section-head">
+          <h2>数据重置 · RESET</h2>
+          <span>CAUTION</span>
+        </div>
+
+        <div class="setting-row clickable" @click="clearRecords">
+          <div>
+            <div class="setting-title" style="color: var(--red);">清空做题记录</div>
+            <div class="setting-desc">清除所有已作答状态与上次练习位置（保留错题本与收藏）</div>
+          </div>
+          <span class="mono" style="color: var(--red); font-size: 13px;">→</span>
+        </div>
+
+        <div class="setting-row clickable" @click="clearMistakes">
+          <div>
+            <div class="setting-title" style="color: var(--red);">清空错题本</div>
+            <div class="setting-desc">清空当前收录的全部错题列表</div>
+          </div>
+          <span class="mono" style="color: var(--red); font-size: 13px;">→</span>
+        </div>
+
+        <div class="app-version-foot">FIT · 信息技术基础刷题 · V1.0.0</div>
+      </main>
+
+      <!-- QUIZ VIEW -->
+      <main v-if="currentTab === 'quiz' && currentQuestion" class="quiz-page-body">
+        <div class="quiz-meta-bar">
+          <div class="quiz-path">
+            <span class="swiss-tag">{{ currentQuestion.typeLabel }}</span>
+            <span>{{ currentQuestion.chapterNumber }} · {{ currentQuestion.sectionNumber }}</span>
+          </div>
+          <div class="quiz-counter">
+            <strong>{{ String(quiz.currentIndex + 1).padStart(2, '0') }}</strong> / {{ String(quiz.queue.length).padStart(2, '0') }}
+          </div>
+        </div>
+
+        <div class="question-stage">
+          <p class="q-stem">
+            <span class="q-seq">{{ currentQuestion.seq }}.</span>{{ currentQuestion.stem }}
+          </p>
+
+          <div
+            v-if="currentQuestion.image"
+            class="q-figure"
+            @click="lightboxSrc = currentQuestion.image"
+          >
+            <img :src="currentQuestion.image" alt="题目配图">
+            <div class="q-figure-hint">TAP TO ZOOM · 点击查看大图</div>
+          </div>
+
+          <!-- Blank Question -->
+          <div v-if="currentQuestion.type === 'blank'" class="blank-box">
+            <input
+              v-model="quiz.tempBlankText"
+              type="text"
+              class="swiss-input"
+              placeholder="在此输入填空答案..."
+              :disabled="isQuestionRevealed"
+              @keyup.enter="submitBlankAnswer"
+            >
+            <div v-if="!isQuestionRevealed" class="blank-actions">
+              <button type="button" class="btn btn-primary" @click="submitBlankAnswer">提交答案</button>
+              <button type="button" class="btn" @click="revealBlankAnswerDirectly">直接看答案</button>
+            </div>
+          </div>
+
+          <!-- Single / Multi / Judge Options -->
+          <div v-if="currentQuestion.type !== 'blank'" class="option-list">
+            <div
+              v-for="opt in currentQuestion.options"
+              :key="opt.key"
+              class="option-row"
+              :class="getOptionClass(opt.key)"
+              @click="onSelectOption(opt.key)"
+            >
+              <div class="option-key">{{ opt.key }}</div>
+              <div class="option-text">{{ opt.text }}</div>
+              <div v-if="getOptionStatusLabel(opt.key)" class="option-mark">
+                {{ getOptionStatusLabel(opt.key) }}
+              </div>
+            </div>
+
+            <div v-if="currentQuestion.type === 'multiple' && !isQuestionRevealed" class="multi-submit-wrap">
+              <button
+                type="button"
+                class="btn btn-primary btn-block"
+                @click="submitMultipleAnswer"
+              >{{ multiSubmitBtnText }}</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analysis Panel -->
+        <div v-if="isQuestionRevealed" class="analysis-panel">
+          <div class="answer-compare-grid">
+            <div class="compare-cell">
+              <div class="compare-label">标准答案</div>
+              <div class="compare-value is-right">{{ formatAnswer(currentQuestion.answer) }}</div>
+            </div>
+            <div class="compare-cell">
+              <div class="compare-label">{{ quiz.mode === 'memorize' ? '当前模式' : '我的作答' }}</div>
+              <div
+                v-if="quiz.mode === 'practice' && currentSessionResult"
+                class="compare-value"
+                :class="currentSessionResult.isCorrect ? 'is-right' : 'is-wrong'"
+              >{{ formatAnswer(currentSessionResult.userAnswer) }}</div>
+              <div v-else class="compare-value" style="color: var(--ink-secondary);">背题直览</div>
+            </div>
+          </div>
+          <div class="analysis-body">
+            <div class="analysis-heading">EXPLANATION · 题目解析</div>
+            <p class="analysis-text">{{ currentQuestion.explanation || '暂无解析' }}</p>
+          </div>
+        </div>
+
+        <!-- Fixed Quiz Footer -->
+        <footer class="quiz-footer">
+          <button
+            type="button"
+            class="btn"
+            :disabled="quiz.currentIndex === 0"
+            @click="prevQuestion"
+          >← 上一题</button>
+          <button
+            v-if="quiz.mode === 'practice' && currentSessionResult"
+            type="button"
+            class="btn"
+            @click="resetCurrentQuestion"
+          >重做本题</button>
+          <button
+            v-else
+            type="button"
+            class="btn"
+            @click="quiz.showSheet = true"
+          >答题卡</button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            :disabled="quiz.currentIndex >= quiz.queue.length - 1"
+            @click="nextQuestion"
+          >下一题 →</button>
+        </footer>
+      </main>
+
+      <!-- BOTTOM TABBAR -->
+      <nav v-if="currentTab !== 'quiz'" class="tabbar" role="tablist">
+        <button
+          type="button"
+          class="tab-item"
+          :class="{ active: currentTab === 'home' }"
+          @click="currentTab = 'home'"
+        >
+          <span class="tab-num">01</span>
+          <span class="tab-label">题库</span>
+        </button>
+        <button
+          type="button"
+          class="tab-item"
+          :class="{ active: currentTab === 'mistakes' }"
+          @click="currentTab = 'mistakes'"
+        >
+          <span class="tab-num">02</span>
+          <span class="tab-label">
+            错题
+            <span v-if="mistakes.length > 0" class="tab-badge">{{ mistakes.length }}</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          class="tab-item"
+          :class="{ active: currentTab === 'search' }"
+          @click="currentTab = 'search'"
+        >
+          <span class="tab-num">03</span>
+          <span class="tab-label">检索</span>
+        </button>
+        <button
+          type="button"
+          class="tab-item"
+          :class="{ active: currentTab === 'stats' }"
+          @click="currentTab = 'stats'"
+        >
+          <span class="tab-num">04</span>
+          <span class="tab-label">数据</span>
+        </button>
+      </nav>
+
+      <!-- SECTION MODE SELECTOR DRAWER -->
+      <div v-if="sectionSheet.open && sectionSheet.section" class="backdrop" @click.self="sectionSheet.open = false">
+        <div class="bottom-sheet">
+          <div class="sheet-header">
+            <div class="sheet-title-group">
+              <div class="sheet-eyebrow">{{ sectionSheet.chapter.number }} · {{ sectionSheet.section.number }}</div>
+              <div class="sheet-title">{{ sectionSheet.section.title }}</div>
+            </div>
+            <button type="button" class="sheet-close" aria-label="关闭" @click="sectionSheet.open = false">×</button>
+          </div>
+          <div class="sheet-body">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+              <span class="mono" style="font-size: 12px; color: var(--ink-secondary);">
+                共 {{ sectionSheet.section.questions.length }} 题 · 已做 {{ getSectionDoneCount(sectionSheet.section.id) }} 题
+              </span>
+              <div class="segmented">
+                <button
+                  type="button"
+                  class="seg-btn"
+                  :class="{ active: sectionSheet.launchMode === 'practice' }"
+                  @click="sectionSheet.launchMode = 'practice'"
+                >答题</button>
+                <button
+                  type="button"
+                  class="seg-btn"
+                  :class="{ active: sectionSheet.launchMode === 'memorize' }"
+                  @click="sectionSheet.launchMode = 'memorize'"
+                >背题</button>
+              </div>
+            </div>
+
+            <div class="mode-grid">
+              <button type="button" class="mode-card-btn primary" @click="launchSection('all')">
+                <span class="mode-card-title">顺序练习</span>
+                <span class="mode-card-sub">全部 {{ sectionSheet.section.questions.length }} 题</span>
+              </button>
+              <button
+                type="button"
+                class="mode-card-btn"
+                :disabled="getSectionRemainingCount(sectionSheet.section.id) === 0"
+                @click="launchSection('unanswered')"
+              >
+                <span class="mode-card-title">仅刷未做</span>
+                <span class="mode-card-sub">剩余 {{ getSectionRemainingCount(sectionSheet.section.id) }} 题</span>
+              </button>
+              <button
+                type="button"
+                class="mode-card-btn"
+                :class="{ 'span-2': getSectionMistakeCount(sectionSheet.section.id) === 0 }"
+                @click="launchSection('random')"
+              >
+                <span class="mode-card-title">随机乱序</span>
+                <span class="mode-card-sub">打乱题序强化</span>
+              </button>
+              <button
+                v-if="getSectionMistakeCount(sectionSheet.section.id) > 0"
+                type="button"
+                class="mode-card-btn red-outline"
+                @click="launchSection('mistakes')"
+              >
+                <span class="mode-card-title">本节错题</span>
+                <span class="mode-card-sub">{{ getSectionMistakeCount(sectionSheet.section.id) }} 道错题</span>
+              </button>
+            </div>
+
+            <div class="analysis-heading" style="margin-bottom: 8px;">BY TYPE · 按题型专练</div>
+            <div class="type-chip-grid">
+              <button
+                v-if="countByType(sectionSheet.section.id, 'single') > 0"
+                type="button"
+                class="btn"
+                @click="launchSection('single')"
+              >单选题 ({{ countByType(sectionSheet.section.id, 'single') }})</button>
+              <button
+                v-if="countByType(sectionSheet.section.id, 'multiple') > 0"
+                type="button"
+                class="btn"
+                @click="launchSection('multiple')"
+              >多选题 ({{ countByType(sectionSheet.section.id, 'multiple') }})</button>
+              <button
+                v-if="countByType(sectionSheet.section.id, 'judge') > 0"
+                type="button"
+                class="btn"
+                @click="launchSection('judge')"
+              >判断题 ({{ countByType(sectionSheet.section.id, 'judge') }})</button>
+              <button
+                v-if="countByType(sectionSheet.section.id, 'blank') > 0"
+                type="button"
+                class="btn"
+                @click="launchSection('blank')"
+              >填空题 ({{ countByType(sectionSheet.section.id, 'blank') }})</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANSWER SHEET DRAWER -->
+      <div v-if="quiz.showSheet" class="backdrop" @click.self="quiz.showSheet = false">
+        <div class="bottom-sheet">
+          <div class="sheet-header">
+            <div class="sheet-title-group">
+              <div class="sheet-eyebrow">ANSWER SHEET</div>
+              <div class="sheet-title">答题卡（共 {{ quiz.queue.length }} 题）</div>
+            </div>
+            <button type="button" class="sheet-close" aria-label="关闭" @click="quiz.showSheet = false">×</button>
+          </div>
+          <div class="sheet-body">
+            <div class="sheet-legend">
+              <span class="legend-item"><span class="legend-box cur"></span>当前</span>
+              <span class="legend-item"><span class="legend-box done-ok"></span>答对</span>
+              <span class="legend-item"><span class="legend-box done-err"></span>答错</span>
+            </div>
+            <div class="answer-sheet-grid">
+              <button
+                v-for="(q, idx) in quiz.queue"
+                :key="q.id"
+                type="button"
+                class="sheet-num-btn"
+                :class="{
+                  current: idx === quiz.currentIndex,
+                  correct: records[q.id] && records[q.id].isCorrect,
+                  wrong: records[q.id] && !records[q.id].isCorrect
+                }"
+                @click="jumpToQuestion(idx)"
+              >{{ String(idx + 1).padStart(2, '0') }}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONFIRM DIALOG MODAL -->
+      <div v-if="confirmModal.open" class="backdrop centered" @click.self="confirmModal.open = false">
+        <div class="modal-box">
+          <div class="sheet-header">
+            <div class="sheet-title-group">
+              <div class="sheet-eyebrow">CONFIRM</div>
+              <div class="sheet-title">{{ confirmModal.title }}</div>
+            </div>
+            <button type="button" class="sheet-close" @click="confirmModal.open = false">×</button>
+          </div>
+          <div class="sheet-body">
+            <p style="margin: 0 0 18px; font-size: 14px; color: var(--ink-secondary);">{{ confirmModal.message }}</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <button type="button" class="btn" @click="confirmModal.open = false">取消</button>
+              <button type="button" class="btn btn-red" @click="executeConfirm">确认执行</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BACKUP TEXT MODAL -->
+      <div v-if="backupModal.open" class="backdrop centered" @click.self="backupModal.open = false">
+        <div class="modal-box">
+          <div class="sheet-header">
+            <div class="sheet-title-group">
+              <div class="sheet-eyebrow">BACKUP · JSON</div>
+              <div class="sheet-title">学习进度备份与恢复</div>
+            </div>
+            <button type="button" class="sheet-close" @click="backupModal.open = false">×</button>
+          </div>
+          <div class="sheet-body">
+            <div class="segmented" style="margin-bottom: 12px;">
+              <button
+                type="button"
+                class="seg-btn"
+                :class="{ active: backupModal.mode === 'export' }"
+                @click="switchBackupModalMode('export')"
+              >生成备份码</button>
+              <button
+                type="button"
+                class="seg-btn"
+                :class="{ active: backupModal.mode === 'import' }"
+                @click="switchBackupModalMode('import')"
+              >粘贴恢复</button>
+            </div>
+            <textarea
+              v-model="backupModal.text"
+              class="backup-textarea"
+              :readonly="backupModal.mode === 'export'"
+              :placeholder="backupModal.mode === 'import' ? '请在此粘贴之前导出的 JSON 备份内容...' : ''"
+            ></textarea>
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+              <button
+                v-if="backupModal.mode === 'export'"
+                type="button"
+                class="btn btn-primary btn-block"
+                @click="copyBackupText"
+              >一键复制备份内容</button>
+              <button
+                v-if="backupModal.mode === 'import'"
+                type="button"
+                class="btn btn-primary btn-block"
+                @click="applyBackupText"
+              >立即导入恢复</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IMAGE LIGHTBOX -->
+      <div v-if="lightboxSrc" class="lightbox" @click="lightboxSrc = ''">
+        <img :src="lightboxSrc" alt="放大配图" @click.stop>
+        <button type="button" class="lightbox-close" @click="lightboxSrc = ''">关闭预览</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="lib/vue.global.prod.js"></script>
+  <script src="data/questions.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
