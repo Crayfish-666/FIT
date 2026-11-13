@@ -124,60 +124,66 @@
           <span>{{ bank.chapters.length }} CHAPTERS / {{ stats.totalCount }} ITEMS</span>
         </div>
 
-        <div v-for="(ch, chIdx) in bank.chapters" :key="ch.id" class="chapter-group">
-          <button
-            type="button"
-            class="chapter-row"
-            :class="{ expanded: activeChapters.includes(ch.id) }"
-            @click="toggleChapter(ch.id)"
-          >
-            <div class="chapter-left">
-              <span class="chapter-num">{{ String(chIdx + 1).padStart(2, '0') }}</span>
-              <span class="chapter-title">{{ ch.number }} · {{ ch.title }}</span>
-            </div>
-            <div class="chapter-right">
-              <span class="chapter-ratio">{{ getChapterDoneCount(ch.id) }}/{{ getChapterTotalCount(ch.id) }}</span>
-              <span class="plus-minus">{{ activeChapters.includes(ch.id) ? '−' : '+' }}</span>
-            </div>
-          </button>
-
-          <div v-if="activeChapters.includes(ch.id)" class="section-list">
-            <div
-              v-for="(sec, secIdx) in ch.sections"
-              :key="sec.id"
-              class="section-row"
-              :class="{ empty: sec.questions.length === 0 }"
-              @click="openSectionSheet(ch, sec)"
+        <template v-for="(ch, chIdx) in bank.chapters" :key="ch.id">
+          <div
+            v-if="ch.module && (chIdx === 0 || bank.chapters[chIdx - 1].module !== ch.module)"
+            class="module-strip"
+          >{{ ch.module }}</div>
+          <div class="chapter-group">
+            <button
+              type="button"
+              class="chapter-row"
+              :class="{ expanded: activeChapters.includes(ch.id) }"
+              @click="toggleChapter(ch.id)"
             >
-              <div class="section-row-top">
-                <div class="section-title-wrap">
-                  <span class="section-code">{{ String(chIdx + 1).padStart(2, '0') }}.{{ String(secIdx + 1).padStart(2, '0') }}</span>
-                  <span class="section-title">{{ sec.number }}　{{ sec.title }}</span>
-                </div>
-                <div class="section-status">
-                  <span v-if="sec.questions.length === 0" class="swiss-tag muted">待录入</span>
-                  <template v-else>
-                    <span>{{ getSectionDoneCount(sec.id) }}/{{ sec.questions.length }}</span>
-                    <span>›</span>
-                  </template>
-                </div>
+              <div class="chapter-left">
+                <span class="chapter-num">{{ String(chIdx + 1).padStart(2, '0') }}</span>
+                <span class="chapter-title">{{ ch.number }} · {{ ch.title }}</span>
               </div>
-              <template v-if="sec.questions.length > 0">
-                <div class="hairline-track">
-                  <div
-                    class="hairline-fill"
-                    :class="{ red: getSectionProgress(sec.id) === 100 }"
-                    :style="{ width: getSectionProgress(sec.id) + '%' }"
-                  ></div>
+              <div class="chapter-right">
+                <span class="chapter-ratio">{{ getChapterDoneCount(ch.id) }}/{{ getChapterTotalCount(ch.id) }}</span>
+                <span class="plus-minus">{{ activeChapters.includes(ch.id) ? '−' : '+' }}</span>
+              </div>
+            </button>
+
+            <div v-if="activeChapters.includes(ch.id)" class="section-list">
+              <div
+                v-for="(sec, secIdx) in ch.sections"
+                :key="sec.id"
+                class="section-row"
+                :class="{ empty: sec.questions.length === 0 }"
+                @click="openSectionSheet(ch, sec)"
+              >
+                <div class="section-row-top">
+                  <div class="section-title-wrap">
+                    <span class="section-code">{{ String(chIdx + 1).padStart(2, '0') }}.{{ String(secIdx + 1).padStart(2, '0') }}</span>
+                    <span class="section-title">{{ sec.number }}　{{ sec.title }}</span>
+                  </div>
+                  <div class="section-status">
+                    <span v-if="sec.questions.length === 0" class="swiss-tag muted">待录入</span>
+                    <template v-else>
+                      <span>{{ getSectionDoneCount(sec.id) }}/{{ sec.questions.length }}</span>
+                      <span>›</span>
+                    </template>
+                  </div>
                 </div>
-                <div class="section-submeta mono">
-                  <span>进度 {{ getSectionProgress(sec.id) }}%</span>
-                  <span>正确率 {{ getSectionAccuracy(sec.id) }}%</span>
-                </div>
-              </template>
+                <template v-if="sec.questions.length > 0">
+                  <div class="hairline-track">
+                    <div
+                      class="hairline-fill"
+                      :class="{ red: getSectionProgress(sec.id) === 100 }"
+                      :style="{ width: getSectionProgress(sec.id) + '%' }"
+                    ></div>
+                  </div>
+                  <div class="section-submeta mono">
+                    <span>进度 {{ getSectionProgress(sec.id) }}%</span>
+                    <span>正确率 {{ getSectionAccuracy(sec.id) }}%</span>
+                  </div>
+                </template>
+              </div>
             </div>
           </div>
-        </div>
+        </template>
       </main>
 
       <!-- TAB 2: MISTAKE BOOK -->

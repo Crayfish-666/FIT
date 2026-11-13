@@ -8,6 +8,7 @@ window.QUESTION_BANK = {
   "chapters": [
     {
       "id": "ch1",
+      "module": "第一部分 · 基础模块",
       "number": "第一章",
       "title": "文档处理",
       "sections": [
@@ -5116,49 +5117,359 @@ window.QUESTION_BANK = {
               "explanation": "标记②处是页眉，可在“插入”（或“章节”）选项卡中选择“页眉页脚”命令。"
             }
           ]
+        },
+        {
+          "id": "ch1_s5",
+          "number": "第五节",
+          "title": "图文混排",
+          "questions": []
+        },
+        {
+          "id": "ch1_s6",
+          "number": "第六节",
+          "title": "表格操作",
+          "questions": []
+        },
+        {
+          "id": "ch1_s7",
+          "number": "第七节",
+          "title": "文档的高级应用",
+          "questions": []
+        },
+        {
+          "id": "ch1_s8",
+          "number": "第八节",
+          "title": "文档的保护、输出与打印",
+          "questions": []
         }
       ]
     },
     {
       "id": "ch2",
+      "module": "第一部分 · 基础模块",
       "number": "第二章",
       "title": "电子表格处理",
       "sections": [
         {
           "id": "ch2_s1",
           "number": "第一节",
-          "title": "电子表格基本知识",
+          "title": "电子表格基础知识",
           "questions": []
         },
         {
           "id": "ch2_s2",
           "number": "第二节",
-          "title": "工作表的编辑与格式设置",
+          "title": "工作簿的基本操作",
           "questions": []
         },
         {
           "id": "ch2_s3",
           "number": "第三节",
-          "title": "公式、函数与数据处理",
+          "title": "工作表的基本操作",
+          "questions": []
+        },
+        {
+          "id": "ch2_s4",
+          "number": "第四节",
+          "title": "单元格的基本操作",
+          "questions": []
+        },
+        {
+          "id": "ch2_s5",
+          "number": "第五节",
+          "title": "公式与函数",
+          "questions": []
+        },
+        {
+          "id": "ch2_s6",
+          "number": "第六节",
+          "title": "图表",
+          "questions": []
+        },
+        {
+          "id": "ch2_s7",
+          "number": "第七节",
+          "title": "数据处理",
+          "questions": []
+        },
+        {
+          "id": "ch2_s8",
+          "number": "第八节",
+          "title": "页面设置与打印",
           "questions": []
         }
       ]
     },
     {
       "id": "ch3",
+      "module": "第一部分 · 基础模块",
       "number": "第三章",
       "title": "演示文稿制作",
       "sections": [
         {
           "id": "ch3_s1",
           "number": "第一节",
-          "title": "演示文稿的基本操作",
+          "title": "WPS 演示基础知识",
           "questions": []
         },
         {
           "id": "ch3_s2",
           "number": "第二节",
-          "title": "幻灯片动画与放映设置",
+          "title": "幻灯片设计",
+          "questions": []
+        },
+        {
+          "id": "ch3_s3",
+          "number": "第三节",
+          "title": "幻灯片的外观控制",
+          "questions": []
+        },
+        {
+          "id": "ch3_s4",
+          "number": "第四节",
+          "title": "演示文稿的交互设计",
+          "questions": []
+        },
+        {
+          "id": "ch3_s5",
+          "number": "第五节",
+          "title": "演示文稿的放映与打印",
+          "questions": []
+        },
+        {
+          "id": "ch3_s6",
+          "number": "第六节",
+          "title": "WPS 演示的其他功能",
+          "questions": []
+        }
+      ]
+    },
+    {
+      "id": "ch4",
+      "module": "第一部分 · 基础模块",
+      "number": "第四章",
+      "title": "Python 程序设计基础",
+      "sections": [
+        {
+          "id": "ch4_s1",
+          "number": "第一节",
+          "title": "程序设计基础知识",
+          "questions": []
+        },
+        {
+          "id": "ch4_s2",
+          "number": "第二节",
+          "title": "Python 编程工具的安装、配置和使用",
+          "questions": []
+        },
+        {
+          "id": "ch4_s3",
+          "number": "第三节",
+          "title": "Python 程序设计语言的基本语法",
+          "questions": []
+        },
+        {
+          "id": "ch4_s4",
+          "number": "第四节",
+          "title": "Python 的数据类型",
+          "questions": []
+        },
+        {
+          "id": "ch4_s5",
+          "number": "第五节",
+          "title": "流程控制",
+          "questions": []
+        },
+        {
+          "id": "ch4_s6",
+          "number": "第六节",
+          "title": "函数",
+          "questions": []
+        },
+        {
+          "id": "ch4_s7",
+          "number": "第七节",
+          "title": "模块",
+          "questions": []
+        },
+        {
+          "id": "ch4_s8",
+          "number": "第八节",
+          "title": "文件操作",
+          "questions": []
+        },
+        {
+          "id": "ch4_s9",
+          "number": "第九节",
+          "title": "异常处理",
+          "questions": []
+        }
+      ]
+    },
+    {
+      "id": "ch5",
+      "module": "第一部分 · 基础模块",
+      "number": "第五章",
+      "title": "信息检索",
+      "sections": [
+        {
+          "id": "ch5_all",
+          "number": "整章",
+          "title": "综合刷题",
+          "questions": []
+        }
+      ]
+    },
+    {
+      "id": "ch6",
+      "module": "第一部分 · 基础模块",
+      "number": "第六章",
+      "title": "信息素养与社会责任",
+      "sections": [
+        {
+          "id": "ch6_all",
+          "number": "整章",
+          "title": "综合刷题",
+          "questions": []
+        }
+      ]
+    },
+    {
+      "id": "ch7",
+      "module": "第二部分 · 扩展模块",
+      "number": "第七章",
+      "title": "新一代信息技术概述",
+      "sections": [
+        {
+          "id": "ch7_all",
+          "number": "整章",
+          "title": "综合刷题",
+          "questions": []
+        }
+      ]
+    },
+    {
+      "id": "ch8",
+      "module": "第二部分 · 扩展模块",
+      "number": "第八章",
+      "title": "信息安全",
+      "sections": [
+        {
+          "id": "ch8_all",
+          "number": "整章",
+          "title": "综合刷题",
+          "questions": []
+        }
+      ]
+    },
+    {
+      "id": "ch9",
+      "module": "第二部分 · 扩展模块",
+      "number": "第九章",
+      "title": "机器人流程自动化",
+      "sections": [
+        {
+          "id": "ch9_all",
+          "number": "整章",
+          "title": "综合刷题",
+          "questions": []
+        }
+      ]
+    },
+    {
+      "id": "ch10",
+      "module": "第二部分 · 扩展模块",
+      "number": "第十章",
+      "title": "大数据",
+      "sections": [
+        {
+          "id": "ch10_all",
+          "number": "整章",
+          "title": "综合刷题",
+          "questions": []
+        }
+      ]
+    },
+    {
+      "id": "ch11",
+      "module": "第二部分 · 扩展模块",
+      "number": "第十一章",
+      "title": "人工智能",
+      "sections": [
+        {
+          "id": "ch11_all",
+          "number": "整章",
+          "title": "综合刷题",
+          "questions": []
+        }
+      ]
+    },
+    {
+      "id": "ch12",
+      "module": "第二部分 · 扩展模块",
+      "number": "第十二章",
+      "title": "云计算",
+      "sections": [
+        {
+          "id": "ch12_all",
+          "number": "整章",
+          "title": "综合刷题",
+          "questions": []
+        }
+      ]
+    },
+    {
+      "id": "ch13",
+      "module": "第二部分 · 扩展模块",
+      "number": "第十三章",
+      "title": "现代通信技术",
+      "sections": [
+        {
+          "id": "ch13_all",
+          "number": "整章",
+          "title": "综合刷题",
+          "questions": []
+        }
+      ]
+    },
+    {
+      "id": "ch14",
+      "module": "第二部分 · 扩展模块",
+      "number": "第十四章",
+      "title": "物联网",
+      "sections": [
+        {
+          "id": "ch14_all",
+          "number": "整章",
+          "title": "综合刷题",
+          "questions": []
+        }
+      ]
+    },
+    {
+      "id": "ch15",
+      "module": "第二部分 · 扩展模块",
+      "number": "第十五章",
+      "title": "数字媒体",
+      "sections": [
+        {
+          "id": "ch15_all",
+          "number": "整章",
+          "title": "综合刷题",
+          "questions": []
+        }
+      ]
+    },
+    {
+      "id": "ch16",
+      "module": "第二部分 · 扩展模块",
+      "number": "第十六章",
+      "title": "区块链",
+      "sections": [
+        {
+          "id": "ch16_all",
+          "number": "整章",
+          "title": "综合刷题",
           "questions": []
         }
       ]
